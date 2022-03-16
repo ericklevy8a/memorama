@@ -424,8 +424,8 @@ function showSettings() {
 // style: must be a valid string part of a filename like back-style.png
 function setCardBackStyle(style) {
     let sheet = 1; // Check this index corresponds to memorama.css
-    let rule = '12'; // Check this key corresponde to .card selector in the CSS
-    document.styleSheets[sheet].cssRules[rule].style.backgroundImage = `url("./img/back-${style}.png")`;
+    let rule = 12; // Check this key corresponde to .card selector in the CSS
+    document.styleSheets[sheet].rules[rule].style.backgroundImage = `url("./img/back-${style}.png")`;
 }
 
 // Initializes the navigation bars buttons
