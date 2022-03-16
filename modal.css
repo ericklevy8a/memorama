@@ -1,0 +1,152 @@
+/* STYLES FOR MODAL DIALOGS */
+
+:root {
+
+    --modal-screen-bg-color: rgba(0, 0, 0, 0.5);
+
+    --modal-header-color: #fff;
+    --modal-header-bg-color: #333;
+
+    --modal-hover-color: #c33;
+
+    --modal-dialog-color: #000;
+    --modal-dialog-bg-color: #fff;
+
+    --modal-button-color: #000;
+    --modal-button-bg-color: #ccc;
+
+    --modal-button-hover-color: #fff;
+    --modal-button-hover-bg-color: var(--modal-hover-color);
+
+}
+
+.modal {
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-screen-bg-color);
+    position: fixed;
+    z-index: 0;
+    left: 0;
+    top: 0;
+    overflow: auto;
+}
+
+.modal .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal .modal-dialog {
+    color: var(--modal-dialog-color);
+    background-color: var(--modal-dialog-bg-color);
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 4px 4px 16px black;
+}
+
+.modal .modal-container {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.modal .modal-header {
+    color: var(--modal-header-color);
+    background-color: var(--modal-header-bg-color);
+    border-radius: 8px 8px 0 0;
+    padding: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.modal .modal-header h4 {
+    font-size: 1.5em;
+    margin: 0 8px;
+}
+
+.modal .modal-header .modal-close {
+    color: var(--modal-header-color);
+    background-color: var(--modal-header-bg-color);
+    border-radius: 1em;
+    border: none;
+    width: 24px;
+    height: 24px;
+}
+
+.modal .modal-header .modal-close:hover {
+    cursor: pointer;
+    color: var(--modal-hover-color);
+    background-color: var(--modal-header-color);
+}
+
+.modal .modal-body {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.modal .modal-body p {
+    text-align: justify;
+}
+
+.modal .modal-body label {
+    display: block;
+    margin-bottom: 1em;
+}
+
+.modal .modal-footer {
+    width: 100%;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: right;
+}
+
+.modal .modal-footer button {
+    cursor: pointer;
+    color: var(--modal-button-color);
+    background-color: var(--modal-button-bg-color);
+    padding: 8px;
+    margin-left: 4px;
+    text-transform: uppercase;
+    border-radius: 0.5em;
+    border: none;
+}
+
+.modal .modal-footer button:hover {
+    color: var(--modal-button-hover-color);
+    background-color: var(--modal-button-hover-bg-color);
+}
+
+.modal .modal-header, .modal .modal-body, .modal .modal-footer {
+    flex-shrink: 0;
+}
+
+.modal.fade,
+.modal .fade {
+    transition: opacity 500ms;
+    opacity: 0;
+}
+
+.modal.fade.show,
+.modal .fade.show {
+    opacity: 1;
+}
+
+.modal.hide,
+.modal .hide {
+    display: none !important;
+}
+
+.blur {
+    filter: blur(4px) saturate(0.2);
+    transition: all 500ms;
+}
+
+/* End of code. */

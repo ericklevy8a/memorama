@@ -1,0 +1,295 @@
+/* Memorama style sheets */
+
+@import url(https://fonts.googleapis.com/icon?family=Material+Icons);
+@import url(https://fonts.googleapis.com/icon?family=Material+Icons+Outlined);
+
+:root {
+    --card-width: 115px;
+    --card-height: 90px;
+
+    --image-width: 115px;
+    --image-height: 90px;
+
+    --transition-delay: 125ms;
+
+    --default-color: black;
+    --default-bg-color: white;
+
+    --card-shadow-color: #ccc;
+    --card-shadow-radius: 2px;
+}
+
+.dark-theme {
+    --default-color: white;
+    --default-bg-color: black;
+
+    --card-shadow-color: none;
+    --card-shadow-radius: none;
+}
+
+html * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+    color: var(--default-color);
+    background-color: var(--default-bg-color);
+    display: flex;
+    flex-direction: column;
+    justify-content:center;
+}
+
+/* HEADER AND MENUS STYLES */
+
+header {
+    width: 100%;
+    max-width: 512px;
+    height: 36px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    padding: 0 4px;
+    border-bottom: 1px solid gray;
+}
+
+header button {
+    border: none;
+    color: var(--default-color);
+    background-color: var(--default-bg-color);
+    cursor: pointer;
+}
+
+/* FOOTER STYLES */
+
+footer {
+    width: 100%;
+    max-width: 512px;
+    margin: 0 auto;
+    color: gray;
+    height: fit-content;
+    padding: 8px 0;
+    text-align: center;
+    border-top: 1px solid gray;
+}
+
+/* GAME STYLES AND TRANSITIONS */
+
+#board-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-holder {
+    width: var(--card-width);
+    height: var(--card-height);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+}
+
+.card {
+    width: var(--card-width);
+    height: var(--card-height);
+    border-radius: 4px;
+    border: none;
+    background-image: url(./img/back-montecarlo.png);
+    box-shadow: 1px 1px var(--card-shadow-radius) var(--card-shadow-radius) var(--card-shadow-color);
+    transition: transform var(--transition-delay);
+}
+.card.flip {
+    transform: rotateX(-90deg) scale(1.2);
+}
+.card.open {
+    border: none;
+    background: url(./img/cards-montecarlo.png);
+}
+.card.taken {
+    transform: rotateX(-90deg) scale(1.5);
+}
+.card.hidden {
+    display: none;
+}
+
+@media (max-width: 512px) {
+    body {
+        justify-content: space-between;
+    }
+    footer {
+        display: none;
+    }
+    #board-container {
+        transform: scale(0.60);
+        height: 100%;
+    }
+}
+
+/* Adjust some styling for modal dialogs */
+
+.fade {
+    font-family: "Poppins", sans-serif;
+}
+.modal-dialog {
+    color: var(--default-color) !important;
+    background-color: var(--default-bg-color) !important;
+    border: 1px solid var(--default-color) !important;
+    width: 400px;
+}
+.modal-dialog p,
+.modal-dialog h5 {
+    margin-bottom: 1em;
+}
+.modal-header, .modal-body, .modal-footer {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.sample {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    margin: 2px;
+}
+
+/* Some styling for stats dialog */
+.modal-body * {
+    font-family: "Helvetica Neue", Helvetica, sans-serif;
+}
+.modal-body h5 {
+    text-transform: uppercase;
+    text-align: center;
+    font-size: large;
+    font-weight: bold;
+}
+#stats-table {
+    width: fit-content;
+    margin: 0 auto 1em auto;
+}
+#stats-table td {
+    width: 1em;
+    text-align: center;
+    vertical-align: top;
+    padding: 0 8px;
+}
+#stats-table td.number {
+    font-size: 2.5em;
+    font-weight: 300;
+}
+#stats-table td.label {
+    font-size: 12px;
+    font-weight: 300;
+}
+#stats-graph {
+    width: 100%;
+}
+#stats-graph .bar-outer {
+    width: 100%;
+    line-height: 24px;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 4px;
+}
+#stats-graph .bar-outer span {
+    width: 1em;
+    text-align: end;
+    margin-right: 4px;
+}
+#stats-graph .bar-inner {
+    min-width: 19px;
+    line-height: 24px;
+    color: var(--guessed-color);
+    background-color: var(--absent-bg-color);
+    text-align: right;
+    padding: 0px 4px;
+}
+#stats-graph .highlight {
+    color: var(--guessed-color);
+    background-color: var(--correct-bg-color);
+}
+
+/* Styling for settings dialog */
+.setting {
+    align-items: center;
+    border-bottom: 1px solid #555;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 16px 0;
+}
+.setting .title {
+    color: var(--default-color);
+    display: block;
+    font-size: 18px;
+}
+.setting .description {
+    color: var(--default-color);
+    filter: brightness(0.5);
+    display: block;
+    font-size: 12px;
+}
+.setting .switch {
+    background-color: #555;
+    height: 20px;
+    width: 32px;
+    padding: 2px;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+}
+.setting .switch[checked] {
+    background-color: #555;
+}
+.setting .switch .knob {
+    display: block;
+    height: 16px;
+    width: 16px;
+    position: absolute;
+    left: 2px;
+    right: auto;
+    border-radius: 8px;
+    background-color: white;
+    transition: all 250ms;
+    pointer-events: none;
+}
+.setting .switch[checked] .knob {
+    right: 2px;
+    left: auto;
+}
+
+.image-select {
+    display: block;
+    clear: both;
+}
+.image-select .image-option {
+    width: 48px;
+    height: 48px;
+    padding: 8px;
+    border-radius: 8px;
+    display: inline-block;
+}
+.image-select .image-option[selected] {
+    background-color: #555;
+}
+/* End of code. */
