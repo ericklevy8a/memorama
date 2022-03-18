@@ -32,6 +32,7 @@ let gameStatistics = getGameStatistics() || false;
 if (gameSettings) {
     if (gameSettings.darkTheme) document.body.classList.add('dark-theme');
     if (gameSettings.back) setCardBackStyle(gameSettings.back);
+    if (gameSettings.set) setCardSetStyle(gameSettings.set);
 }
 
 // Initialize the data for each pair of images for the cards
@@ -380,16 +381,27 @@ function showSettings() {
                 <div class="image-select">
                     <img class="image-option" name="back" data-value="montecarlo" src="./img/back-montecarlo.png">
                     <img class="image-option" name="back" data-value="classic-blue" src="./img/back-classic-blue.png">
+                    <img class="image-option" name="back" data-value="pokemon" src="./img/back-pokemon.png">
                     <img class="image-option" name="back" data-value="old" src="./img/back-old.png">
+                </div>
+            </div>
+
+            <div class="setting">
+                <div class="Text">
+                    <div class="title">Card Images Set</div>
+                </div>
+                <div class="image-select">
+                    <img class="image-option" name="set" data-value="montecarlo" src="./img/set-montecarlo.png">
+                    <img class="image-option" name="set" data-value="minecraft" src="./img/set-minecraft.png">
+                    <img class="image-option" name="set" data-value="pokemon-cute" src="./img/set-pokemon-cute.png">
                 </div>
             </div>
 
         </div>`;
     msgbox('', html);
-    // Set attribute in actual selected back design
-    if (gameSettings.back) {
-        document.querySelector(`.image-option[data-value='${gameSettings.back}']`).setAttribute('selected', '');
-    }
+    // Set a selected attribute in back and set options (if selected)
+    if (gameSettings.back) document.querySelector(`.image-option[name='back'][data-value='${gameSettings.back}']`).setAttribute('selected', '');
+    if (gameSettings.set) document.querySelector(`.image-option[name='set'][data-value='${gameSettings.set}']`).setAttribute('selected', '');
     // Event listener for changes in the settings controls
     document.getElementById('settings-container').addEventListener('click', (e) => {
         let target = e.target;
@@ -408,7 +420,7 @@ function showSettings() {
         }
         // Card Back Design
         if (name == 'back') {
-            let lastSelected = document.querySelector('.image-option[selected]');
+            let lastSelected = document.querySelector('.image-option[name="back"][selected]');
             let optionSelected = target.dataset.value;
             if (lastSelected) lastSelected.removeAttribute('selected');
             target.setAttribute('selected', '');
@@ -416,16 +428,41 @@ function showSettings() {
             // Apply setting to actual game
             setCardBackStyle(optionSelected);
         }
+
+        // Card image set
+        if (name == 'set') {
+            let lastSelected = document.querySelector('.image-option[name="set"][selected]');
+            let optionSelected = target.dataset.value;
+            if (lastSelected) lastSelected.removeAttribute('selected');
+            target.setAttribute('selected', '');
+            gameSettings.set = optionSelected;
+            // Apply setting to actual game
+            setCardSetStyle(optionSelected);
+        }
+
+        // Store configuration in local storage
         storeGameSettings(gameSettings);
     });
 }
 
 // Change background image for card back style
-// style: must be a valid string part of a filename like back-style.png
-function setCardBackStyle(style) {
-    let sheet = 1; // Check this index corresponds to memorama.css
-    let rule = '12'; // Check this key corresponde to .card selector in the CSS
-    document.styleSheets[sheet].cssRules[rule].style.backgroundImage = `url("./img/back-${style}.png")`;
+// style: must be a valid string part of a filename like back-{styleName}.png
+function setCardBackStyle(styleName) {
+    let rules = []; // empty array to gather all the CSS rules of
+    let sheets = [...document.styleSheets]; // all the document stylesheets
+    sheets.forEach(sheet => rules.push(...sheet.cssRules)); // all rules together
+    cardRule = rules.find(rule => rule.selectorText === '.card'); // to find the card class selector
+    cardRule.style.backgroundImage = `url("./img/back-${styleName}.png")`; // and change the back image style
+}
+
+// Change set of images for open cards
+// style: must be a valid string part of a filename like set-{styleName}.png
+function setCardSetStyle(styleName) {
+    let rules = []; // empty array to gather all the CSS rules of
+    let sheets = [...document.styleSheets]; // all the document stylesheets
+    sheets.forEach(sheet => rules.push(...sheet.cssRules)); // all rules together
+    cardRule = rules.find(rule => rule.selectorText === '.card.open'); // to find the open card class selector
+    cardRule.style.backgroundImage = `url("./img/set-${styleName}.png")`; // and change the back image style
 }
 
 // Initializes the navigation bars buttons

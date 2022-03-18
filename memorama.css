@@ -120,7 +120,7 @@ footer {
 }
 .card.open {
     border: none;
-    background: url(./img/cards-montecarlo.png);
+    background: url(./img/set-montecarlo.png);
 }
 .card.taken {
     transform: rotateX(-90deg) scale(1.5);
