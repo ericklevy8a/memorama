@@ -10,7 +10,7 @@ const BOARD_COLS = 4;
 const IMAGE_ROWS = 4;
 const IMAGE_COLS = 4;
 
-const IMAGE_WIDTH = 115;
+const IMAGE_WIDTH = 90;
 const IMAGE_HEIGHT = 90;
 
 const CLOSE_PAIR_DELAY = 1500;
@@ -31,8 +31,7 @@ let gameStatistics = getGameStatistics() || false;
 // Based on settings apply some general classes to body
 if (gameSettings) {
     if (gameSettings.darkTheme) document.body.classList.add('dark-theme');
-    if (gameSettings.back) setCardBackStyle(gameSettings.back);
-    if (gameSettings.set) setCardSetStyle(gameSettings.set);
+    if (gameSettings.set) setCardSetStyle();
 }
 
 // Initialize the data for each pair of images for the cards
@@ -56,6 +55,11 @@ function initImages() {
 function getRandomImage() {
     if (images.length == 0) {
         initImages();
+        let boardPlaces = BOARD_COLS * BOARD_ROWS;
+        if (boardPlaces < images.length * 2) {
+            boardPlaces -= boardPlaces % 2;
+            images.length = boardPlaces / 2;
+        }
     }
     // Get the indexes of the available images
     let avail = [];
@@ -80,8 +84,8 @@ function getRandomImage() {
 function initBoard() {
     let boardContainer = document.getElementById('board-container');
     for (let i = 0; i < BOARD_ROWS; i++) {
-        let row = document.createElement('div');
-        row.classList.add('row');
+        //let row = document.createElement('div');
+        //row.classList.add('row');
         for (let j = 0; j < BOARD_COLS; j++) {
             let cardImage = getRandomImage();
             // If there is card image available
@@ -95,10 +99,11 @@ function initBoard() {
                 card.dataset.id = cardImage.id;
                 card.addEventListener('click', cardClick);
                 cardHolder.appendChild(card);
-                row.appendChild(cardHolder);
+                //row.appendChild(cardHolder);
+                boardContainer.appendChild(cardHolder);
             }
         }
-        boardContainer.appendChild(row);
+        //boardContainer.appendChild(row);
     }
 }
 
@@ -281,8 +286,10 @@ function getGameSettings() {
         return JSON.parse(localStorage.getItem('memorama-settings')) ||
         {
             darkTheme: false,
-            cards: 'montecarlo',
-            back: 'montecarlo'
+            set: {
+                name: "montecarlo",
+                radius: "2px"
+            }
         }
     }
 }
@@ -374,39 +381,27 @@ function showSettings() {
                 </div>
             </div>
 
-            <div class="setting">
+            <div class="setting vertical">
                 <div class="Text">
-                    <div class="title">Card Back Design</div>
+                    <div class="title">Card Set</div>
                 </div>
                 <div class="image-select">
-                    <img class="image-option" name="back" data-value="montecarlo" src="./img/back-montecarlo.png">
-                    <img class="image-option" name="back" data-value="classic-blue" src="./img/back-classic-blue.png">
-                    <img class="image-option" name="back" data-value="pokemon" src="./img/back-pokemon.png">
-                    <img class="image-option" name="back" data-value="old" src="./img/back-old.png">
-                </div>
-            </div>
-
-            <div class="setting">
-                <div class="Text">
-                    <div class="title">Card Images Set</div>
-                </div>
-                <div class="image-select">
-                    <img class="image-option" name="set" data-value="montecarlo" src="./img/set-montecarlo.png">
-                    <img class="image-option" name="set" data-value="minecraft" src="./img/set-minecraft.png">
-                    <img class="image-option" name="set" data-value="pokemon-cute" src="./img/set-pokemon-cute.png">
+                    <img class="image-option" name="set" data-value="montecarlo" data-radius="2px" title="Montecarlo" src="./img/back-montecarlo.png">
+                    <img class="image-option" name="set" data-value="minecraft" data-radius="10px" title="Minecraft" src="./img/back-minecraft.png">
+                    <img class="image-option" name="set" data-value="pokemon" data-radius="12px" title="Pokemon" src="./img/back-pokemon.png">
                 </div>
             </div>
 
         </div>`;
     msgbox('', html);
-    // Set a selected attribute in back and set options (if selected)
-    if (gameSettings.back) document.querySelector(`.image-option[name='back'][data-value='${gameSettings.back}']`).setAttribute('selected', '');
-    if (gameSettings.set) document.querySelector(`.image-option[name='set'][data-value='${gameSettings.set}']`).setAttribute('selected', '');
+    // Set a selected attribute in card set options (if selected)
+    if (gameSettings.set) document.querySelector(`.image-option[name='set'][data-value='${gameSettings.set.name}']`).setAttribute('selected', '');
     // Event listener for changes in the settings controls
     document.getElementById('settings-container').addEventListener('click', (e) => {
         let target = e.target;
         let name = target.getAttribute('name');
         let checked = (target.getAttribute('checked') == null);
+
         // Dark Theme
         if (name == 'dark-theme') {
             gameSettings.darkTheme = checked;
@@ -418,26 +413,15 @@ function showSettings() {
                 target.removeAttribute('checked');
             }
         }
-        // Card Back Design
-        if (name == 'back') {
-            let lastSelected = document.querySelector('.image-option[name="back"][selected]');
-            let optionSelected = target.dataset.value;
-            if (lastSelected) lastSelected.removeAttribute('selected');
-            target.setAttribute('selected', '');
-            gameSettings.back = optionSelected;
-            // Apply setting to actual game
-            setCardBackStyle(optionSelected);
-        }
 
         // Card image set
         if (name == 'set') {
             let lastSelected = document.querySelector('.image-option[name="set"][selected]');
-            let optionSelected = target.dataset.value;
             if (lastSelected) lastSelected.removeAttribute('selected');
             target.setAttribute('selected', '');
-            gameSettings.set = optionSelected;
+            gameSettings.set = { name: target.dataset.value, radius: target.dataset.radius };
             // Apply setting to actual game
-            setCardSetStyle(optionSelected);
+            setCardSetStyle();
         }
 
         // Store configuration in local storage
@@ -445,24 +429,17 @@ function showSettings() {
     });
 }
 
-// Change background image for card back style
-// style: must be a valid string part of a filename like back-{styleName}.png
-function setCardBackStyle(styleName) {
+// Change set of images for open cards
+// style: must be a valid string part of a filename like set-{styleName}.png
+function setCardSetStyle() {
     let rules = []; // empty array to gather all the CSS rules of
     let sheets = [...document.styleSheets]; // all the document stylesheets
     sheets.forEach(sheet => rules.push(...sheet.cssRules)); // all rules together
     cardRule = rules.find(rule => rule.selectorText === '.card'); // to find the card class selector
-    cardRule.style.backgroundImage = `url("./img/back-${styleName}.png")`; // and change the back image style
-}
-
-// Change set of images for open cards
-// style: must be a valid string part of a filename like set-{styleName}.png
-function setCardSetStyle(styleName) {
-    let rules = []; // empty array to gather all the CSS rules of
-    let sheets = [...document.styleSheets]; // all the document stylesheets
-    sheets.forEach(sheet => rules.push(...sheet.cssRules)); // all rules together
-    cardRule = rules.find(rule => rule.selectorText === '.card.open'); // to find the open card class selector
-    cardRule.style.backgroundImage = `url("./img/set-${styleName}.png")`; // and change the back image style
+    cardRule.style.backgroundImage = `url("./img/back-${gameSettings.set.name}.png")`; // and change the back image style
+    cardRule.style.borderRadius = gameSettings.set.radius; // and the card border radius
+    cardOpenRule = rules.find(rule => rule.selectorText === '.card.open'); // to find the open card class selector
+    cardOpenRule.style.backgroundImage = `url("./img/set-${gameSettings.set.name}.png")`; // and change the back image style
 }
 
 // Initializes the navigation bars buttons
