@@ -158,7 +158,6 @@ footer {
     border: 1px solid var(--default-color) !important;
     width: 400px;
 }
-.modal-dialog p,
 .modal-dialog h5 {
     margin-bottom: 1em;
 }

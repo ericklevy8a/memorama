@@ -102,6 +102,7 @@ function getRandomImage() {
  */
 function initBoard() {
     let boardContainer = document.getElementById('board-container');
+    boardContainer.innerHTML = '';
     for (let i = 0; i < BOARD_PLACES; i++) {
         let cardImage = getRandomImage();
         // If there is card image available
@@ -137,7 +138,6 @@ function cardClick(e) {
     } else if (gCard2 == null) {
         gCard2 = target;
         openCard(target);
-        gSteps += 1;
     }
 }
 
@@ -161,8 +161,6 @@ function openCard(card) {
  */
 function checkGuessPair() {
     if (gCard1 !== null && gCard2 !== null) {
-        // Increment the steps (pairs opened)
-        gSteps += 1;
         // If there is a pair
         if (gCard1.dataset.id === gCard2.dataset.id) {
             // Take or retire a match pair
@@ -184,7 +182,7 @@ function checkGuessPair() {
 function closeGuessCards() {
     closeCard(gCard1);
     closeCard(gCard2);
-    //Reset pair
+    //Reset guess pair
     gCard1 = null;
     gCard2 = null;
     // Update and store game state
@@ -209,6 +207,7 @@ function closeCard(card) {
  * Take the guess pair of cards and check game over condition
  */
 function takeGuessCards() {
+    // Take out the pair o cards and pass a callback to update and save the board state
     takeCard(gCard1);
     takeCard(gCard2, () => {
         updateBoardState();
@@ -217,13 +216,14 @@ function takeGuessCards() {
     // Reset guess pair
     gCard1 = null;
     gCard2 = null;
-    // Update and game state
+    // Update and save game state
     gSteps += 1;
     gameState.steps = gSteps;
     setGameState();
     // Check GAME OVER condition (no cards remain)
     let takenCount = [...document.getElementsByClassName('card open')].length;
     if (BOARD_PLACES - takenCount === 0) {
+        // Use a timeout to wait for the cards transitions and board updates
         setTimeout(() => {
             gameState.gameStatus = 'GAME_OVER';
             setGameState();
@@ -238,18 +238,23 @@ function takeGuessCards() {
                 gameStatistics.gamesPlayed * (BOARD_PLACES / 2)
                 / gameStatistics.stepsPlayed * 100);
             setGameStatistics();
-            // Prepare message and show in modal box
+            // Prepare a game over message and show it in a modal box
             let msg = `<p>You have achieved it in ${gSteps} attempts with an efficiency of ${efficiency}%<p>`;
-            msg += '<p>Press <b>RESTART</b> to play a new game board...<p>';
-            msgbox('Game Over!', msg, 'Restart', gameRestart);
+            msg += '<p>Press <b>RESTART</b> or reload the page to play again...<p>';
+            msgbox('Game Over!', msg, 'Restart', buttonRestartOnClick);
         }, TRANSITION_DELAY * 2);
     }
+}
+
+function buttonRestartOnClick() {
+    msgboxClose();
+    gameRestart();
 }
 
 /**
  * Manipulate classes and transition timeup to take off a card
  * @param {*} card - The reference to the card to take off
- * @param {function} callback - Something execute at the end of the timeout
+ * @param {function} callback - Something to execute at the end of the timeout
  */
 function takeCard(card, callback = null) {
     card.classList.add('taken');
@@ -261,38 +266,40 @@ function takeCard(card, callback = null) {
 }
 
 /**
- * Provisional function to restart the game (reloading page)
+ * Restart the game (without reloading the page)
  */
 function gameRestart() {
-    location.reload();
+    // Reset time and step counter
+    gStartTime = new Date();
+    gSteps = 0;
+    // Create and store a new game board
+    initImages();
+    initBoard();
+    updateBoardState();
+    gameState.gameStatus = 'IN_PROGRESS';
+    gameState.startTime = gStartTime;
+    gameState.steps = gSteps;
+    setGameState();
 }
 
 // LOCAL STORAGE FUNCTIONS
 
 /**
- * Restores a game state previusly saved in local storage
+ * Restores a game previusly saved in local storage or create a new one
  */
 function restoreGameState() {
     if (gameState) {
         if (gameState.gameStatus === 'IN_PROGRESS') {
             // Reconstructs the game from the stored state data
-            let cards = [...document.getElementsByClassName('card')];
-            let boardState = gameState.boardState;
-            if (cards.length === boardState.length) {
-                for (let i = 0; i < cards.length; i++) {
-                    cards[i].dataset.id = boardState[i].id;
-                    cards[i].style = gImageSet[boardState[i].id].style;
-                    cards[i].className = boardState[i].className;
-                }
-            }
+            restoreBoardState();
             // Restore timer and step counter
+            gStartTime = gameState.startTime;
+            gSteps = gameState.steps;
         } else {
-            // Create and store a new game state data
-            updateBoardState();
-            gameState.gameStatus = 'IN_PROGRESS';
-            // Reset time and step counter
-            setGameState();
+            gameRestart();
         }
+    } else {
+        msgbox('Error', 'There is a problem with local storage that prevents knowing the game status!');
     }
 }
 
@@ -313,6 +320,21 @@ function updateBoardState() {
 }
 
 /**
+ * Restore the game board state from store
+ */
+function restoreBoardState() {
+    let cards = [...document.getElementsByClassName('card')];
+    let boardState = gameState.boardState;
+    if (cards.length === boardState.length) {
+        for (let i = 0; i < cards.length; i++) {
+            cards[i].dataset.id = boardState[i].id;
+            cards[i].style = gImageSet[boardState[i].id].style;
+            cards[i].className = boardState[i].className;
+        }
+    }
+}
+
+/**
  * Get the game state from local storage or creates a initial one
  * @returns a structure with the game state data
  */
@@ -320,6 +342,7 @@ function getGameState() {
     return getLocalStorageItem('memorama-state', {
         boardState: [],
         gameStatus: '',
+        startTime: 0,
         steps: 0
     });
 }
