@@ -4,67 +4,82 @@
 * Inspired by a board game from my childhood :)
 */
 
-const BOARD_ROWS = 8;
-const BOARD_COLS = 4;
+const BOARD_PLACES = 32;
 
+// Size and distribution of image set
 const IMAGE_ROWS = 4;
 const IMAGE_COLS = 4;
-
 const IMAGE_WIDTH = 90;
 const IMAGE_HEIGHT = 90;
 
+// Some timing parameters
 const CLOSE_PAIR_DELAY = 1500;
 const TRANSITION_DELAY = 125;
 
-let images = [];
+// Array to maintain the image set
+let gImageSet = [];
 
+// Reference to first and second cards in each guess
 let gCard1 = null;
 let gCard2 = null;
 
+// Statistical data
 let gSteps = 0;
+let gStartTime = 0;
 
 // Try to get the game state, statistical and settings structures from local storage
 let gameState = getGameState() || false;
 let gameSettings = getGameSettings() || false;
 let gameStatistics = getGameStatistics() || false;
 
-// Based on settings apply some general classes to body
+// If present, apply some gamesettings
 if (gameSettings) {
     if (gameSettings.darkTheme) document.body.classList.add('dark-theme');
-    if (gameSettings.set) setCardSetStyle();
+    if (gameSettings.set) changeCardSetCSS();
 }
 
-// Initialize the data for each pair of images for the cards
-// id: number used for identify each pair of images
-// style: string used to reposition the background to display the corresponding image
-// avail: keep track of available images of each id
+/**
+ * Initialize the data for each pair of the image set
+ */
 function initImages() {
+    gImageSet = [];
     for (let i = 0; i < IMAGE_ROWS; i++) {
         for (let j = 0; j < IMAGE_COLS; j++) {
             let image = {
+                // id: number used for identify each image pair in the set
                 id: i * IMAGE_COLS + j,
+                // style: string to reposition the background to display the corresponding image
                 style: `background-position: left ${IMAGE_WIDTH * j}px top ${IMAGE_HEIGHT * i}px;`,
+                // avail: keep track of available images of each pair (id)
                 avail: 2
             }
-            images.push(image);
+            gImageSet.push(image);
         }
     }
 }
 
-// Get a ramdom image for a card from a pile of avail images (in pairs)
+/**
+ * Get a ramdom image data for a card from a subset of avail images (in pairs)
+ * @returns {object|false} A struct with data of the random picked image or false if there are no avail
+ */
 function getRandomImage() {
-    if (images.length == 0) {
+    // If image set is not initialized
+    if (gImageSet.length == 0) {
         initImages();
-        let boardPlaces = BOARD_COLS * BOARD_ROWS;
-        if (boardPlaces < images.length * 2) {
+        let boardPlaces = BOARD_PLACES;
+        // Check if board places is lesser than images in set
+        if (boardPlaces < gImageSet.length * 2) {
+            // Force boardPlaces to be an even number
             boardPlaces -= boardPlaces % 2;
-            images.length = boardPlaces / 2;
+            // Limit image array to the number of needed pairs
+            gImageSet.length = boardPlaces / 2;
         }
     }
-    // Get the indexes of the available images
     let avail = [];
-    for (let c = 0; c < images.length; c++) {
-        if (images[c].avail > 0) {
+    // Get the indexes of the available images
+    for (let c = 0; c < gImageSet.length; c++) {
+        // If available
+        if (gImageSet[c].avail > 0) {
             avail.push(c);
         }
     }
@@ -76,44 +91,46 @@ function getRandomImage() {
     }
     // Pick a ramdom index
     let index = avail[Math.floor(Math.random() * count)];
-    images[index].avail -= 1;
-    return images[index];
+    // Decrement availability of the picked image
+    gImageSet[index].avail -= 1;
+    // Return the image data
+    return gImageSet[index];
 }
 
-// Initialize the game board
+/**
+ * Initialize the game board with random cards
+ */
 function initBoard() {
     let boardContainer = document.getElementById('board-container');
-    for (let i = 0; i < BOARD_ROWS; i++) {
-        //let row = document.createElement('div');
-        //row.classList.add('row');
-        for (let j = 0; j < BOARD_COLS; j++) {
-            let cardImage = getRandomImage();
-            // If there is card image available
-            if (cardImage) {
-                // Use a card holder as a spacer
-                let cardHolder = document.createElement('div');
-                cardHolder.classList.add('card-holder');
-                let card = document.createElement('div');
-                card.classList.add('card');
-                card.style = cardImage.style;
-                card.dataset.id = cardImage.id;
-                card.addEventListener('click', cardClick);
-                cardHolder.appendChild(card);
-                //row.appendChild(cardHolder);
-                boardContainer.appendChild(cardHolder);
-            }
+    for (let i = 0; i < BOARD_PLACES; i++) {
+        let cardImage = getRandomImage();
+        // If there is card image available
+        if (cardImage) {
+            // Use a card holder as a spacer
+            let cardHolder = document.createElement('div');
+            cardHolder.classList.add('card-holder');
+            let card = document.createElement('div');
+            card.classList.add('card');
+            card.style = cardImage.style;
+            card.dataset.id = cardImage.id;
+            card.addEventListener('click', cardClick);
+            cardHolder.appendChild(card);
+            boardContainer.appendChild(cardHolder);
         }
-        //boardContainer.appendChild(row);
     }
 }
 
-// Management of the card click
+/**
+ * Management of the card click
+ * @param {event} e
+ */
 function cardClick(e) {
     let target = e.target;
     // Check if card is already open
     if (target.classList.contains('open')) {
         return;
     }
+    // Check the corresponding guess position and open the card
     if (gCard1 == null) {
         gCard1 = target;
         openCard(target);
@@ -124,7 +141,10 @@ function cardClick(e) {
     }
 }
 
-// Manipulate classes for a card open transition
+/**
+ * Manipulate CSS classes for a card open transition
+ * @param {object} card
+ */
 function openCard(card) {
     card.classList.add('flip');
     setTimeout(() => {
@@ -132,79 +152,126 @@ function openCard(card) {
         card.classList.remove('flip');
     }, 250)
     if (gCard1 !== null && gCard2 !== null) {
-        checkPair(gCard1, gCard2);
+        checkGuessPair();
     }
 }
 
-// Manipulate classes for card pair close transitions
-function closeCards() {
-    gCard1.classList.add('flip');
-    gCard2.classList.add('flip');
-    setTimeout(() => {
-        // Close pair
-        gCard1.classList.remove('open');
-        gCard2.classList.remove('open');
-        gCard1.classList.remove('flip');
-        gCard2.classList.remove('flip');
-        //Reset pair
-        gCard1 = null;
-        gCard2 = null;
-        // Update and store game state
-        // TODO: timer, steps...
-        // may be not updateBoardState();
-        storeGameState();
-    }, TRANSITION_DELAY);
-}
-
-// Manipulate classes for card pair take transitions
-function takeCards() {
-    gCard1.classList.add('taken');
-    gCard2.classList.add('taken');
-    setTimeout(() => {
-        // Hide pair
-        gCard1.classList.add('hidden');
-        gCard2.classList.add('hidden');
-        gCard1.classList.remove('taken');
-        gCard2.classList.remove('taken');
-        // Reset guess pair
-        gCard1 = null;
-        gCard2 = null;
-        // Update and store game state
-        // TODO: check end of game (avail pairs count)
-        let cardCount = [...document.getElementsByClassName('card')].length;
-        let takenCount = [...document.getElementsByClassName('card hidden')].length;
-        if (cardCount - takenCount === 0) {
-            gameState.gameStatus = 'GAME_OVER';
-            msgbox('Game Over!', 'Press <b>RESTART</b> to play a new game board...', 'Restart', gameRestart);
+/**
+ * Check if the guess pair of cards is the same image
+ */
+function checkGuessPair() {
+    if (gCard1 !== null && gCard2 !== null) {
+        // Increment the steps (pairs opened)
+        gSteps += 1;
+        // If there is a pair
+        if (gCard1.dataset.id === gCard2.dataset.id) {
+            // Take or retire a match pair
+            setTimeout(() => {
+                takeGuessCards();
+            }, CLOSE_PAIR_DELAY);
+        } else {
+            // Close the unmatched pair of cards
+            setTimeout(() => {
+                closeGuessCards();
+            }, CLOSE_PAIR_DELAY);
         }
-        // TODO: timer, steps, points (pairs count)...
-        updateBoardState();
-        storeGameState();
+    }
+}
+
+/**
+ * Close the guess pair of cards and update stats
+ */
+function closeGuessCards() {
+    closeCard(gCard1);
+    closeCard(gCard2);
+    //Reset pair
+    gCard1 = null;
+    gCard2 = null;
+    // Update and store game state
+    gSteps += 1;
+    gameState.steps = gSteps;
+    setGameState();
+}
+
+/**
+ * Manipulate classes and transition timeup to close a card
+ * @param {*} card - The reference to the card to close
+ */
+function closeCard(card) {
+    card.classList.add('flip');
+    setTimeout(() => {
+        card.classList.remove('open');
+        card.classList.remove('flip');
     }, TRANSITION_DELAY);
 }
 
+/**
+ * Take the guess pair of cards and check game over condition
+ */
+function takeGuessCards() {
+    takeCard(gCard1);
+    takeCard(gCard2, () => {
+        updateBoardState();
+        setGameState();
+    });
+    // Reset guess pair
+    gCard1 = null;
+    gCard2 = null;
+    // Update and game state
+    gSteps += 1;
+    gameState.steps = gSteps;
+    setGameState();
+    // Check GAME OVER condition (no cards remain)
+    let takenCount = [...document.getElementsByClassName('card open')].length;
+    if (BOARD_PLACES - takenCount === 0) {
+        setTimeout(() => {
+            gameState.gameStatus = 'GAME_OVER';
+            setGameState();
+            // Prepare and save game statistics
+            let efficiency = Math.round((BOARD_PLACES / 2) / gSteps * 100);
+            let highlight = Math.floor(efficiency / 10);
+            gameStatistics.freq[highlight] += 1;
+            gameStatistics.highlight = highlight;
+            gameStatistics.gamesPlayed += 1;
+            gameStatistics.stepsPlayed += gSteps;
+            gameStatistics.efficiencyRate = Math.round(
+                gameStatistics.gamesPlayed * (BOARD_PLACES / 2)
+                / gameStatistics.stepsPlayed * 100);
+            setGameStatistics();
+            // Prepare message and show in modal box
+            let msg = `<p>You have achieved it in ${gSteps} attempts with an efficiency of ${efficiency}%<p>`;
+            msg += '<p>Press <b>RESTART</b> to play a new game board...<p>';
+            msgbox('Game Over!', msg, 'Restart', gameRestart);
+        }, TRANSITION_DELAY * 2);
+    }
+}
+
+/**
+ * Manipulate classes and transition timeup to take off a card
+ * @param {*} card - The reference to the card to take off
+ * @param {function} callback - Something execute at the end of the timeout
+ */
+function takeCard(card, callback = null) {
+    card.classList.add('taken');
+    setTimeout(() => {
+        card.classList.add('hidden');
+        card.classList.remove('taken');
+        if (callback) callback();
+    }, TRANSITION_DELAY);
+}
+
+/**
+ * Provisional function to restart the game (reloading page)
+ */
 function gameRestart() {
     location.reload();
 }
 
-// Check if the guessed pair of cards is the same image
-function checkPair(card1, card2) {
-    // If there is a pair
-    if (card1.dataset.id === card2.dataset.id) {
-        setTimeout(() => {
-            takeCards();
-        }, CLOSE_PAIR_DELAY);
-    } else {
-        // Close the pair of cards
-        setTimeout(() => {
-            closeCards();
-        }, CLOSE_PAIR_DELAY);
-    }
-}
-
 // LOCAL STORAGE FUNCTIONS
 
-// Restores a game state previusly saved in local storage
+/**
+ * Restores a game state previusly saved in local storage
+ */
 function restoreGameState() {
     if (gameState) {
         if (gameState.gameStatus === 'IN_PROGRESS') {
@@ -214,7 +281,7 @@ function restoreGameState() {
             if (cards.length === boardState.length) {
                 for (let i = 0; i < cards.length; i++) {
                     cards[i].dataset.id = boardState[i].id;
-                    cards[i].style = images[boardState[i].id].style;
+                    cards[i].style = gImageSet[boardState[i].id].style;
                     cards[i].className = boardState[i].className;
                 }
             }
@@ -224,12 +291,14 @@ function restoreGameState() {
             updateBoardState();
             gameState.gameStatus = 'IN_PROGRESS';
             // Reset time and step counter
-            storeGameState();
+            setGameState();
         }
     }
 }
 
-// Prepare the game board state for store
+/**
+ * Prepare the game board state for store
+ */
 function updateBoardState() {
     let cards = [...document.getElementsByClassName('card')];
     let boardState = [];
@@ -243,61 +312,87 @@ function updateBoardState() {
     gameState.boardState = boardState;
 }
 
-// Get the game state from local storage or creates a initial one
+/**
+ * Get the game state from local storage or creates a initial one
+ * @returns a structure with the game state data
+ */
 function getGameState() {
-    if (typeof (Storage) !== 'undefined') {
-        return JSON.parse(localStorage.getItem('memorama-state')) ||
-        {
-            boardState: [],
-            gameStatus: ''
-        }
-    }
+    return getLocalStorageItem('memorama-state', {
+        boardState: [],
+        gameStatus: '',
+        steps: 0
+    });
 }
 
-// Store the game state to local storage
-function storeGameState() {
-    if (typeof (Storage) !== 'undefined') {
-        localStorage.setItem('memorama-state', JSON.stringify(gameState));
-    }
+/**
+ * Store the game state to local storage
+ */
+function setGameState() {
+    setLocalStorageItem('memorama-state', gameState);
 }
 
-// Get the game statistics from local storage or creates a initial one
+/**
+ * Get the game statistics from local storage or creates a initial one
+ * @returns a structure with the game statistics data
+ */
 function getGameStatistics() {
-    if (typeof (Storage) !== 'undefined') {
-        return JSON.parse(localStorage.getItem('memorama-statistics')) ||
-        {
-            gamesPlayed: 0,
-            gamesWon: 0,
-            winPercentage: 0.0
-        }
-    }
+    return getLocalStorageItem('memorama-statistics', {
+        freq: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        highlight: 0,
+        gamesPlayed: 0,
+        stepsPlayed: 0,
+        efficiencyRate: 0
+    });
 }
 
-// Store the game statistics to local storage
-function storeGameStatistics() {
-    if (typeof (Storage) !== 'undefined') {
-        localStorage.setItem('memorama-statistics', JSON.stringify(gameStatistics));
-    }
+/**
+ * Store the game statistics to local storage
+ */
+function setGameStatistics() {
+    setLocalStorageItem('memorama-statistics', gameStatistics);
 }
 
-// Get the game settings from local storage or creates a initial one
+/**
+ * Get the game settings from local storage or creates a initial one
+ * @returns a structure with the game settings data
+ */
 function getGameSettings() {
-    if (typeof (Storage) !== 'undefined') {
-        return JSON.parse(localStorage.getItem('memorama-settings')) ||
-        {
-            darkTheme: false,
-            set: {
-                name: "montecarlo",
-                radius: "2px"
-            }
+    return getLocalStorageItem('memorama-settings', {
+        darkTheme: false,
+        set: {
+            name: "montecarlo",
+            radius: "2px"
         }
+    });
+}
+
+/**
+ * Store the game settings to local storage
+ */
+function setGameSettings() {
+    setLocalStorageItem('memorama-settings', gameSettings);
+}
+
+/**
+ * Save an item in local storage
+ * @param {string} key - The name or key of the item
+ * @param {*} value - The value to stringify and save
+ */
+function setLocalStorageItem(key, value) {
+    if (typeof (Storage) !== 'undefined') {
+        localStorage.setItem(key, JSON.stringify(value));
     }
 }
 
-// Store the game settings to local storage
-function storeGameSettings(gameSettings) {
+/**
+ * Get an item value from local storage
+ * @param {string} key  - The name or key of the item
+ * @param {*} value - A default value to return in case of fail
+ * @returns A parsed object or the default value or false
+ */
+function getLocalStorageItem(key, value = false) {
     if (typeof (Storage) !== 'undefined') {
-        localStorage.setItem('memorama-settings', JSON.stringify(gameSettings));
+        return JSON.parse(localStorage.getItem(key)) || value;
     }
 }
 
@@ -322,39 +417,33 @@ function showHelp() {
 }
 
 // Use msgbox to display a modal statistics dialog
-function showStats() {
+function showStatistics() {
     let html = `
         <div id="stats-container">
             <h5>Statistics</h5>
             <table id="stats-table">
                 <tr>
-                    <td class="number">${gameStats.gamesPlayed}</td>
-                    <td class="number">${gameStats.gamesWon}</td>
-                    <td class="number">${Math.round(gameStats.winPercentage)}</td>
-                    <td class="number">${gameStats.currentStreak}</td>
-                    <td class="number">${gameStats.maxStreak}</th>
+                    <td class="number">${gameStatistics.gamesPlayed}</td>
+                    <td class="number">${gameStatistics.efficiencyRate}</td>
                 </tr>
                 <tr>
                     <td class="label">Played</td>
-                    <td class="label">Won</td>
-                    <td class="label">Win %</td>
-                    <td class="label">Current Streak</td>
-                    <td class="label">Max Streak</td>
+                    <td class="label">Efficiency %</td>
                 </tr>
             </table>
-            <h5>Guess Distribution</h5>
+            <h5>Efficiency Distribution</h5>
             <div id="stats-graph">`;
-    let maxGuesses = 0;
-    for (let i = 1; i <= NUMBER_OF_GUESSES; i++) {
-        if (gameStats.guesses[i] > maxGuesses) maxGuesses = gameStats.guesses[i];
-    }
-    for (let i = 1; i <= NUMBER_OF_GUESSES; i++) {
-        let width = Math.round(gameStats.guesses[i] / maxGuesses * 100);
-        let highlight = (gameStats.highlight == i) ? 'highlight' : '';
+    let maxValue = 0;
+    for (let i = 0; i < 10; i++)
+        if (gameStatistics.freq[i] > maxValue)
+            maxValue = gameStatistics.freq[i];
+    for (let i = 0; i < 10; i++) {
+        let width = Math.round(gameStatistics.freq[i] / maxValue * 100);
+        let highlight = (gameStatistics.highlight == i) ? 'highlight' : '';
         html += `
             <div class="bar-outer">
-                <span>${i}</span>
-                <div class="bar-inner ${highlight}" style="width: ${width}%">${gameStats.guesses[i]}</div>
+                <span>${i * 10}</span>
+                <div class="bar-inner ${highlight}" style="width: ${width}%">${gameStatistics.freq[i]}</div>
             </div>`;
     }
     html += `
@@ -421,17 +510,18 @@ function showSettings() {
             target.setAttribute('selected', '');
             gameSettings.set = { name: target.dataset.value, radius: target.dataset.radius };
             // Apply setting to actual game
-            setCardSetStyle();
+            changeCardSetCSS();
         }
 
         // Store configuration in local storage
-        storeGameSettings(gameSettings);
+        setGameSettings();
     });
 }
 
-// Change set of images for open cards
-// style: must be a valid string part of a filename like set-{styleName}.png
-function setCardSetStyle() {
+/**
+ * Change set of CSS images to reflect game settings (user selections)
+ */
+function changeCardSetCSS() {
     let rules = []; // empty array to gather all the CSS rules of
     let sheets = [...document.styleSheets]; // all the document stylesheets
     sheets.forEach(sheet => rules.push(...sheet.cssRules)); // all rules together
@@ -442,11 +532,13 @@ function setCardSetStyle() {
     cardOpenRule.style.backgroundImage = `url("./img/set-${gameSettings.set.name}.png")`; // and change the back image style
 }
 
-// Initializes the navigation bars buttons
+/**
+ * Initializes the navigation bars buttons
+ */
 function initNavBar() {
     document.getElementById('button-menu').addEventListener('click', () => { msgbox('Menu', 'This is a work in progress...') });
     document.getElementById('button-help').addEventListener('click', showHelp);
-    document.getElementById('button-statistics').addEventListener('click', showStats);
+    document.getElementById('button-statistics').addEventListener('click', showStatistics);
     document.getElementById('button-settings').addEventListener('click', showSettings);
 }
 

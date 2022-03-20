@@ -3,6 +3,8 @@
 @import url(https://fonts.googleapis.com/icon?family=Material+Icons);
 @import url(https://fonts.googleapis.com/icon?family=Material+Icons+Outlined);
 
+@import url(https://fonts.googleapis.com/css2?family=Poppins&display=swap);
+
 :root {
     --card-width: 90px;
     --card-height: 90px;
@@ -23,8 +25,8 @@
     --default-color: white;
     --default-bg-color: black;
 
-    --card-shadow-color: none;
-    --card-shadow-radius: none;
+    --card-shadow-color: black;
+    --card-shadow-radius: 1px;
 }
 
 html * {
@@ -34,21 +36,24 @@ html * {
 }
 
 body {
+    min-width: 390px;
+    max-width: 768px;
     width: 100vw;
     height: 100vh;
-    overflow: hidden;
+    margin: 0 auto;
+    /* overflow: hidden; */
     color: var(--default-color);
     background-color: var(--default-bg-color);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
+
 }
 
 /* HEADER AND MENUS STYLES */
 
 header {
-    max-width: 512px;
     width: 100%;
     height: 36px;
     display: flex;
@@ -57,6 +62,7 @@ header {
     justify-content: space-between;
     flex-wrap: nowrap;
     border-bottom: 1px solid gray;
+    font-family: 'Poppins', sans-serif;
 }
 
 header button {
@@ -76,9 +82,9 @@ main {
 /* FOOTER STYLES */
 
 footer {
-    display: none;
     font-size: small;
-    max-width: 512px;
+    max-width: 768px;
+    min-width: 390px;
     width: 100%;
     margin: 0 auto;
     color: gray;
@@ -86,37 +92,27 @@ footer {
     padding: 8px 0;
     text-align: center;
     border-top: 1px solid gray;
+    font-family: 'Arial Condensed', Helvetica, sans-serif;
 }
 
-@media (min-width: 390px) {
-    body {
-        justify-content: center;
-    }
-    footer {
-        display: block;
-    }
+@media (orientation: landscape) and (max-height: 468px) {
+    body { min-height: 380px; }
+    header { display: none; }
+    footer { display: none; }
+}
+
+@media (orientation: portrait) and (max-height: 840px) {
+    footer { display: none; }
 }
 
 /* GAME STYLES AND TRANSITIONS */
 
 #board-container {
-    max-width: 390px;
     width: 100%;
-    display: block;
-    padding: 5px;
-    text-align: center;
-    margin: 0 auto;
-    line-height: 0px;
-}
-@media (min-width: 768px) and (orientation: landscape) {
-    #board-container {
-        min-width: 768px;
-    }
-}
-@media (max-width: 390px) {
-    body {
-        min-width: 390px;
-    }
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
 }
 
 .card-holder {
@@ -135,7 +131,6 @@ footer {
     border-radius: 2px;
     border: none;
     background-image: url(./img/back-montecarlo.png);
-    box-shadow: 1px 1px var(--card-shadow-radius) var(--card-shadow-radius) var(--card-shadow-color);
     transition: transform var(--transition-delay);
 }
 .card.flip {
@@ -222,21 +217,21 @@ footer {
     margin-bottom: 4px;
 }
 #stats-graph .bar-outer span {
-    width: 1em;
+    width: 24px;
     text-align: end;
-    margin-right: 4px;
+    margin-right: 8px;
 }
 #stats-graph .bar-inner {
     min-width: 19px;
     line-height: 24px;
-    color: var(--guessed-color);
-    background-color: var(--absent-bg-color);
+    color: white;
+    background-color: #555;
     text-align: right;
     padding: 0px 4px;
 }
 #stats-graph .highlight {
-    color: var(--guessed-color);
-    background-color: var(--correct-bg-color);
+    color: white;
+    background-color: #369;
 }
 
 /* Styling for settings dialog */
