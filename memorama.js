@@ -221,13 +221,23 @@ function takeGuessCards() {
     gameState.steps = gSteps;
     setGameState();
     // Check GAME OVER condition (no cards remain)
+    checkGameOver();
+}
+
+/**
+ * Check game over condition calculating the remain pairs of cards
+ */
+function checkGameOver() {
     let takenCount = [...document.getElementsByClassName('card open')].length;
+    // Calculate and check remain cards
     if (BOARD_PLACES - takenCount === 0) {
+        let endTime = Date.now();
         // Use a timeout to wait for the cards transitions and board updates
         setTimeout(() => {
             gameState.gameStatus = 'GAME_OVER';
             setGameState();
             // Prepare and save game statistics
+            let gameTime = calculateGameTime(gameState.startTime, endTime);
             let efficiency = Math.round((BOARD_PLACES / 2) / gSteps * 100);
             let highlight = Math.floor(efficiency / 10);
             gameStatistics.freq[highlight] += 1;
@@ -239,11 +249,48 @@ function takeGuessCards() {
                 / gameStatistics.stepsPlayed * 100);
             setGameStatistics();
             // Prepare a game over message and show it in a modal box
-            let msg = `<p>You have achieved it in ${gSteps} attempts with an efficiency of ${efficiency}%<p>`;
-            msg += '<p>Press <b>RESTART</b> or reload the page to play again...<p>';
+            let msg = `<p>You have achieved it in ${gameTime}, with ${gSteps} attempts and an efficiency of ${efficiency}%.</p>`;
+            msg += '<p>Press <b>RESTART</b> or reload the page to play again...</p>';
             msgbox('Game Over!', msg, 'Restart', buttonRestartOnClick);
         }, TRANSITION_DELAY * 2);
     }
+}
+
+/**
+ * Calculate and construct a string with the time of the game
+ * @param {number} startTime - a start time in milliseconds
+ * @param {number} endTime - an end time in milliseconds
+ * @returns {string} - the time of the game in milliseconds
+ */
+function calculateGameTime(startTime, endTime) {
+    if (startTime < endTime) {
+        let ms = endTime - startTime;
+        let time = timeInMsToString(ms, false);
+        let arr = time.split(':');
+        let list = [];
+        if (arr[0] !== '0') list.push(arr[0] + ' ' + (arr[0] == '1' ? 'hour' : 'hours'));
+        if (arr[1] !== '0') list.push(arr[1] + ' ' + (arr[1] == '1' ? 'minute' : 'minutes'));
+        if (arr[2] !== '0') list.push(arr[2] + ' ' + (arr[2] == '1' ? 'second' : 'seconds'));
+        const formatter = new Intl.ListFormat('en', { type: 'conjunction' });
+        return formatter.format(list);
+    }
+}
+/**
+ * Convert a time in ms to a string
+ * @param {number} ms - number of milliseconds to convert (default is 0)
+ * @param {boolean} leadingZeros - leading zeros format (default is true)
+ * @returns {string} in the H:mm:ss or H:m:s format
+ */
+function timeInMsToString(ms = 0, leadingZeros = true) {
+    let sec = Math.round(ms / 1000);
+    let min = Math.floor(sec / 60);
+    let hrs = Math.floor(min / 60);
+    sec = sec % 60;
+    min = min % 60;
+    if (leadingZeros)
+        return '' + hrs + ':' + ('0' + min).slice(-2) + ':' + ('0' + sec).slice(-2);
+    else
+        return hrs + ':' + min + ':' + sec;
 }
 
 function buttonRestartOnClick() {
@@ -269,16 +316,14 @@ function takeCard(card, callback = null) {
  * Restart the game (without reloading the page)
  */
 function gameRestart() {
-    // Reset time and step counter
-    gStartTime = new Date();
-    gSteps = 0;
-    // Create and store a new game board
+    // Reset game status, start time and step counter
+    gameState.gameStatus = 'IN_PROGRESS';
+    gameState.startTime = gStartTime = Date.now();
+    gameState.steps = gSteps = 0;
+    // Create and store a new game board and game state
     initImages();
     initBoard();
     updateBoardState();
-    gameState.gameStatus = 'IN_PROGRESS';
-    gameState.startTime = gStartTime;
-    gameState.steps = gSteps;
     setGameState();
 }
 
@@ -553,6 +598,10 @@ function changeCardSetCSS() {
     cardRule.style.borderRadius = gameSettings.set.radius; // and the card border radius
     cardOpenRule = rules.find(rule => rule.selectorText === '.card.open'); // to find the open card class selector
     cardOpenRule.style.backgroundImage = `url("./img/set-${gameSettings.set.name}.png")`; // and change the back image style
+    // Card holder box style for adjust CSS border radius
+    cardHolder = rules.find(rule => rule.selectorText === '.card-holder');
+    cardHolder.style.borderRadius = gameSettings.set.radius;
+
 }
 
 /**
