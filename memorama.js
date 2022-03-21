@@ -35,7 +35,7 @@ let gameStatistics = getGameStatistics() || false;
 // If present, apply some gamesettings
 if (gameSettings) {
     if (gameSettings.darkTheme) document.body.classList.add('dark-theme');
-    if (gameSettings.set) changeCardSetCSS();
+    if (gameSettings.set) changeCardSet();
 }
 
 /**
@@ -114,6 +114,9 @@ function initBoard() {
             card.classList.add('card');
             card.style = cardImage.style;
             card.dataset.id = cardImage.id;
+            if (gameSettings.set) {
+                cardHolder.dataset.set = card.dataset.set = gameSettings.set;
+            }
             card.addEventListener('click', cardClick);
             cardHolder.appendChild(card);
             boardContainer.appendChild(cardHolder);
@@ -207,9 +210,10 @@ function closeCard(card) {
  * Take the guess pair of cards and check game over condition
  */
 function takeGuessCards() {
-    // Take out the pair o cards and pass a callback to update and save the board state
+    // Take out the pair o cards and pass a callback...
     takeCard(gCard1);
     takeCard(gCard2, () => {
+        // ...to update and save the board state
         updateBoardState();
         setGameState();
     });
@@ -220,8 +224,22 @@ function takeGuessCards() {
     gSteps += 1;
     gameState.steps = gSteps;
     setGameState();
-    // Check GAME OVER condition (no cards remain)
+    // Check for GAME OVER condition (no cards remain)
     checkGameOver();
+}
+
+/**
+ * Manipulate classes and transition timeup to take off a card
+ * @param {*} card - The reference to the card to take off
+ * @param {function} callback - Something to execute at the end of the timeout
+ */
+function takeCard(card, callback = null) {
+    card.classList.add('taken');
+    setTimeout(() => {
+        card.classList.add('hidden');
+        card.classList.remove('taken');
+        if (callback) callback();
+    }, TRANSITION_DELAY);
 }
 
 /**
@@ -293,23 +311,12 @@ function timeInMsToString(ms = 0, leadingZeros = true) {
         return hrs + ':' + min + ':' + sec;
 }
 
+/**
+ * Process button Restart on click event
+ */
 function buttonRestartOnClick() {
     msgboxClose();
     gameRestart();
-}
-
-/**
- * Manipulate classes and transition timeup to take off a card
- * @param {*} card - The reference to the card to take off
- * @param {function} callback - Something to execute at the end of the timeout
- */
-function takeCard(card, callback = null) {
-    card.classList.add('taken');
-    setTimeout(() => {
-        card.classList.add('hidden');
-        card.classList.remove('taken');
-        if (callback) callback();
-    }, TRANSITION_DELAY);
 }
 
 /**
@@ -427,10 +434,7 @@ function setGameStatistics() {
 function getGameSettings() {
     return getLocalStorageItem('memorama-settings', {
         darkTheme: false,
-        set: {
-            name: "montecarlo",
-            radius: "2px"
-        }
+        set: "montecarlo"
     });
 }
 
@@ -466,29 +470,47 @@ function getLocalStorageItem(key, value = false) {
 
 // NAV BAR ACTIONS
 
+function showAbout() {
+    let msg = `
+        <div id="about-container">
+            <p>© Copyright 2022 by Erick Levy!</p>
+            <p>Inspired in a board game I played with my family in my chilhood named Memorama®
+            from the mexican game company Novedades Montecarlo, S.A. de C.V. 1973.</p>
+            <p>Thank you for taking the time to learn about and play with this little app.</p>
+            <h5>Other Games</h5>
+            <p>There are other games and Apps I was implemented and published. If you want to take a look at them,
+            here are the links: </p>
+            <ul>
+                <li><a href="../switcher/"><i class="switcher"></i>The Switcher Game</a></li>
+                <li><a href="../tileslider/"><i class="tileslider"></i>The Tile Slider</a></li>
+                <li><a href="../wordle/"><i class="wordle"></i>Wordle Clone</a></li>
+                <li><a href="../pokedex/"><i class="pokedex"></i>Pokedex (not a game)</a></li>
+            </ul>
+        </div>
+    `;
+    msgbox('About This Game', msg);
+}
+
 // Use msgbox to display a modal help dialog
 function showHelp() {
     let msg = `
         <div id="help-container">
-            <h5>HOW TO PLAY</h5>
             <p>The goal of the game is to find pairs with the same printed figure using memory.</p>
-            <p>This version is for solitaire mode, where you want to break the record time it takes
-            to complete the game.</p>
-            <h5>ABOUT THIS GAME</h5>
-            <p>© Copyright 2022 by Erick Levy!</p>
-            <p>Inspired in a board game I played with my family in my chilhood named Memorama®
-            from the mexican game company Novedades Montecarlo, S.A. de C.V. 1973</p>
-            <p>Thank you for taking the time to learn about and play with this little app.</p>
+            <p>You can open up to two cards per turn, if both match,
+                the pair will be removed from the board.</p>
+            <p>The game is over when there are no more cards in the board.</p>
+            <h5>SOME ADVICE</h5>
+            <p>Try to play neatly and stay focused.</p>
+            <p>In desktop viewers you can use zooming to adjust the size of the elements.</p>
         </div>
     `;
-    msgbox('', msg);
+    msgbox('How To Play', msg);
 }
 
 // Use msgbox to display a modal statistics dialog
 function showStatistics() {
     let html = `
         <div id="stats-container">
-            <h5>Statistics</h5>
             <table id="stats-table">
                 <tr>
                     <td class="number">${gameStatistics.gamesPlayed}</td>
@@ -517,14 +539,13 @@ function showStatistics() {
     html += `
         </div>
     </div>`;
-    msgbox('', html);
+    msgbox('Statistics', html);
 }
 
 // Use msgbox to display a modal settings dialog
 function showSettings() {
     let html = `
         <div id="settings-container">
-            <h5>Settings</h5>
 
             <div class="setting">
                 <div class="Text">
@@ -532,7 +553,7 @@ function showSettings() {
                     <div class="description">Reduce luminance to ergonmy levels</div>
                 </div>
                 <div class="control">
-                    <div class="switch" id="dark-theme" name="dark-theme" ${gameSettings.darkTheme ? 'checked' : ''}>
+                    <div class="switch" id="dark-theme" name="dark-theme">
                         <div class="knob">&nbsp;</div>
                     </div>
                 </div>
@@ -541,27 +562,32 @@ function showSettings() {
             <div class="setting vertical">
                 <div class="Text">
                     <div class="title">Card Set</div>
+                    <div class="description">Choose your favorite card style</div>
                 </div>
                 <div class="image-select">
-                    <img class="image-option" name="set" data-value="montecarlo" data-radius="2px" title="Montecarlo" src="./img/back-montecarlo.png">
-                    <img class="image-option" name="set" data-value="minecraft" data-radius="10px" title="Minecraft" src="./img/back-minecraft.png">
-                    <img class="image-option" name="set" data-value="pokemon" data-radius="24px" title="Pokemon" src="./img/back-pokemon.png">
+                    <img class="image-option" name="set" data-value="montecarlo" title="Montecarlo" src="./img/sets/montecarlo/back.png">
+                    <img class="image-option" name="set" data-value="minecraft" title="Minecraft" src="./img/sets/minecraft/back.png">
+                    <img class="image-option" name="set" data-value="pokemon" title="Pokemon" src="./img/sets/pokemon/back.png">
                 </div>
             </div>
 
         </div>`;
-    msgbox('', html);
-    // Set a selected attribute in card set options (if selected)
-    if (gameSettings.set) document.querySelector(`.image-option[name='set'][data-value='${gameSettings.set.name}']`).setAttribute('selected', '');
+    msgbox('Settings', html);
+    // Check for dark theme mode value and initialize its checked attribute
+    if (gameSettings.darkTheme) document.getElementById('dark-theme').setAttribute('checked', '');
+    // Check for actual image set value and initialize its option selected attribute
+    if (gameSettings.set) document.querySelector(`.image-option[name='set'][data-value='${gameSettings.set}']`).setAttribute('selected', '');
     // Event listener for changes in the settings controls
     document.getElementById('settings-container').addEventListener('click', (e) => {
         let target = e.target;
         let name = target.getAttribute('name');
-        let checked = (target.getAttribute('checked') == null);
 
-        // Dark Theme
+        // Dark Theme (check type control)
         if (name == 'dark-theme') {
+            // Inverts checked state and update game setting
+            let checked = (target.getAttribute('checked') == null);
             gameSettings.darkTheme = checked;
+            // Apply setting on game and update the input checked state
             if (checked) {
                 document.body.classList.add('dark-theme');
                 target.setAttribute('checked', '');
@@ -571,14 +597,16 @@ function showSettings() {
             }
         }
 
-        // Card image set
+        // Card image set (image select option type control)
         if (name == 'set') {
+            // Update image options selected state
             let lastSelected = document.querySelector('.image-option[name="set"][selected]');
             if (lastSelected) lastSelected.removeAttribute('selected');
             target.setAttribute('selected', '');
-            gameSettings.set = { name: target.dataset.value, radius: target.dataset.radius };
+            // Update game setting
+            gameSettings.set = target.dataset.value;
             // Apply setting to actual game
-            changeCardSetCSS();
+            changeCardSet();
         }
 
         // Store configuration in local storage
@@ -587,28 +615,21 @@ function showSettings() {
 }
 
 /**
- * Change set of CSS images to reflect game settings (user selections)
+ * Change set of images to reflect game settings (user selections)
  */
-function changeCardSetCSS() {
-    let rules = []; // empty array to gather all the CSS rules of
-    let sheets = [...document.styleSheets]; // all the document stylesheets
-    sheets.forEach(sheet => rules.push(...sheet.cssRules)); // all rules together
-    cardRule = rules.find(rule => rule.selectorText === '.card'); // to find the card class selector
-    cardRule.style.backgroundImage = `url("./img/back-${gameSettings.set.name}.png")`; // and change the back image style
-    cardRule.style.borderRadius = gameSettings.set.radius; // and the card border radius
-    cardOpenRule = rules.find(rule => rule.selectorText === '.card.open'); // to find the open card class selector
-    cardOpenRule.style.backgroundImage = `url("./img/set-${gameSettings.set.name}.png")`; // and change the back image style
-    // Card holder box style for adjust CSS border radius
-    cardHolder = rules.find(rule => rule.selectorText === '.card-holder');
-    cardHolder.style.borderRadius = gameSettings.set.radius;
-
+function changeCardSet() {
+    let set = gameSettings.set;
+    let cardHolders = [...document.getElementsByClassName('card-holder')];
+    cardHolders.forEach(cardHolder => cardHolder.dataset.set = set);
+    let cards = [...document.getElementsByClassName('card')];
+    cards.forEach(card => card.dataset.set = set);
 }
 
 /**
  * Initializes the navigation bars buttons
  */
 function initNavBar() {
-    document.getElementById('button-menu').addEventListener('click', () => { msgbox('Menu', 'This is a work in progress...') });
+    document.getElementById('button-menu').addEventListener('click', showAbout);
     document.getElementById('button-help').addEventListener('click', showHelp);
     document.getElementById('button-statistics').addEventListener('click', showStatistics);
     document.getElementById('button-settings').addEventListener('click', showSettings);
