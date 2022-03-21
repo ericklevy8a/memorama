@@ -87,7 +87,7 @@
 
 .modal .modal-body {
     flex-grow: 1;
-    padding: 20px;
+    padding: 0 20px;
 }
 
 .modal .modal-body p {

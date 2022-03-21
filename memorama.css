@@ -1,4 +1,4 @@
-/* Memorama style sheets */
+/* MEMORAMA GAME STYLE SHEET */
 
 @import url(https://fonts.googleapis.com/icon?family=Material+Icons);
 @import url(https://fonts.googleapis.com/icon?family=Material+Icons+Outlined);
@@ -17,13 +17,19 @@
     --default-color: black;
     --default-bg-color: white;
 
+    --almost-bg-color: #eee;
+
     --card-shadow-color: #ccc;
     --card-shadow-radius: 2px;
+
+    --highlight-color: #369;
 }
 
 .dark-theme {
     --default-color: white;
     --default-bg-color: black;
+
+    --almost-bg-color: #111;
 
     --card-shadow-color: black;
     --card-shadow-radius: 1px;
@@ -122,8 +128,7 @@ footer {
     align-items: center;
     justify-content: center;
     margin: 2px;
-    background-color: #111;
-    border-radius: 2px;
+    background-color: var(--almost-bg-color);
 }
 
 .card {
@@ -131,7 +136,7 @@ footer {
     height: var(--card-height);
     border-radius: 2px;
     border: none;
-    background-image: url(./img/back-montecarlo.png);
+    background-image: url(./img/sets/montecarlo/back.png);
     transition: transform var(--transition-delay);
 }
 .card.flip {
@@ -139,18 +144,18 @@ footer {
 }
 .card.open {
     border: none;
-    background: url(./img/set-montecarlo.png);
+    background: url(./img/sets/montecarlo/figures.png);
 }
 .card.taken {
     transform: rotateX(-90deg) scale(1.5);
 }
 .card.hidden {
     display: none;
-    /* filter: brightness(0.1) saturate(0); */
 }
 
-/* Adjust some styling for modal dialogs */
+/* MODAL DIALOGS */
 
+/* Adjust some general styling */
 .fade {
     font-family: "Poppins", sans-serif;
 }
@@ -167,19 +172,6 @@ footer {
     color: inherit !important;
     background-color: inherit !important;
 }
-.sample {
-    display: inline-block;
-    height: 24px;
-    width: 24px;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 20px;
-    font-weight: bold;
-    color: white;
-    margin: 2px;
-}
-
-/* Some styling for stats dialog */
 .modal-body * {
     font-family: "Helvetica Neue", Helvetica, sans-serif;
 }
@@ -192,6 +184,25 @@ footer {
 .modal-body p:not(:last-child) {
     margin-bottom: 1em;
 }
+.modal-body li {
+    list-style: none;
+}
+.modal-body a {
+    text-decoration: none;
+    color: var(--default-color);
+}
+.modal-body a:hover {
+    color: var(--highlight-color);
+}
+
+/* Styling for about dialog */
+i { display: inline-block; width: 16px; height: 16px; background-size: cover; margin-right: 8px; }
+i.switcher { background-image: url(./img/switcher.png); }
+i.tileslider { background-image: url(./img/tileslider.png); }
+i.wordle { background-image: url(./img/wordle.png); }
+i.pokedex { background-image: url(./img/pokedex.png); }
+
+/* Styling for statistics dialog */
 #stats-table {
     width: fit-content;
     margin: 0 auto 1em auto;
@@ -272,7 +283,7 @@ footer {
     cursor: pointer;
 }
 .setting .switch[checked] {
-    background-color: #555;
+    background-color: var(--highlight-color);
 }
 .setting .switch .knob {
     display: block;
@@ -302,7 +313,46 @@ footer {
     display: inline-block;
 }
 .image-select .image-option[selected] {
-    background-color: #555;
+    background-color: var(--highlight-color);
     /* border: 1px solid white; */
 }
+
+/* SETS OF IMAGES */
+
+/* montecarlo */
+.card-holder[data-set="montecarlo"] {
+    border-radius: 2px;
+}
+.card[data-set="montecarlo"] {
+    background-image: url(./img/sets/montecarlo/back.png);
+    border-radius: 2px;
+}
+.card.open[data-set="montecarlo"] {
+    background-image: url(./img/sets/montecarlo/figures.png);
+}
+
+/* minecraft */
+.card-holder[data-set="minecraft"] {
+    border-radius: 12px;
+}
+.card[data-set="minecraft"] {
+    background-image: url(./img/sets/minecraft/back.png);
+    border-radius: 12px;
+}
+.card.open[data-set="minecraft"] {
+    background-image: url(./img/sets/minecraft/figures.png);
+}
+
+/* pokemon */
+.card-holder[data-set="pokemon"] {
+    border-radius: 24px;
+}
+.card[data-set="pokemon"] {
+    background-image: url(./img/sets/pokemon/back.png);
+    border-radius: 24px;
+}
+.card.open[data-set="pokemon"] {
+    background-image: url(./img/sets/pokemon/figures.png);
+}
+
 /* End of code. */
