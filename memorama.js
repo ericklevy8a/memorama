@@ -545,7 +545,7 @@ function showSettings() {
                 <div class="image-select">
                     <img class="image-option" name="set" data-value="montecarlo" data-radius="2px" title="Montecarlo" src="./img/back-montecarlo.png">
                     <img class="image-option" name="set" data-value="minecraft" data-radius="10px" title="Minecraft" src="./img/back-minecraft.png">
-                    <img class="image-option" name="set" data-value="pokemon" data-radius="12px" title="Pokemon" src="./img/back-pokemon.png">
+                    <img class="image-option" name="set" data-value="pokemon" data-radius="24px" title="Pokemon" src="./img/back-pokemon.png">
                 </div>
             </div>
 
